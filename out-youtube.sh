@@ -47,7 +47,81 @@ CYAN="\e[0;36m"; B_CYAN="\e[1;36m" #ciano
 # Dentro da função echo  apenas tem echo no qual será inserido no out-config
 function add_config(){
 
-    echo -e "\n# Esse arquivo será usado para guardar as informações para fazer download\n# do conteúdo do canal. Aqui contém informações necessárias que será usado\n# pelo out-youtube.\n#\n#\n# Esse arquivo contém as seguintes informações:\n# API_KEY: Sua chave para acessar API do youtube. \n# \n# CHANNEL_YOUTUBE: seu canal desejado para baixar o conteúdo.\n#\n# USER_YOUTUBE: usuário do youtube que tem o canal para baixar o conteúdo.\n#\n# DIRECTORY: qual pasta os arquivos serão armazenados\n#\n# VIDEO: download videos\n#\n# AUDIO: obter áudio\n#\n# SUBTITLE: download legenda youtube\n# ---------------------------------------------------------------\n#\n# Para criar ou substituir esse arquivo use 'out-youtube out <diretório>'. O diretório\n# é aonde o arquivo ficará e recomendamos colocar na pasta que o conteúdo do youtube\n# colocado.\n\n\n# A chave API do youtube que será usada para ter aceso a informações do canal.\n# criar uma API_KEY\n#\nAPI_KEY=\n\n\n# O ID do canal desejado é similar a esse UCgnYFet4mgK-7SpNJoI6b_A\n# A informação do Channel geralmente está na url do \n# canal https://www.youtube.com/channel/UCgnYFet4mgK-7SpNJoI6b_A\n# Talvez precise atualizar a paǵina do canal para mostrar o ID do canal\n# Você deve colocar o valor no CHANNEL_YOUTUBE ou colocar o USER_YOUTUBE. Caso os dois\n# estejam definidos o out-youtube terá preferência no CHANNEL_YOUTUBE\n#\nCHANNEL_YOUTUBE=\n\n# Para encontrar o id e colocar no CHANNEL_YOUTUBE ou user no USER_YOUTUBE pode ser\n# um pouco chato para achar o que pode ajudar com esse link \n# https://support.google.com/youtube/answer/6180214?hl=en\n# Colocar o USER_YOUTUBE do canal exemplo: dreamtheater (https://www.youtube.com/user/dreamtheater)\n# \nUSER_YOUTUBE=\n\n# Esse valor é o local aonde os conteúdos do canal serão armazenados. Esse valor precisa\n# estar com '/' no final senão o out-youtube interpretará como um prefixo para os arquivos.\n# Esse local deverá estar criado antes de chamar o out-youtube pois ele não criará pastas\n# e recomendando usar caminho completo para a pasta\n#\nDIRECTORY=./\n\n# Informação sobre o download do conteúdo \n# opções:\n# -- video\n# -- audio\n# -- legendas\n\n# Informar se é necessário baixar o vídeo do canal\n# Se desejar deixe 'true' para o out-youtube fazer download dos vídeos\n#\nVIDEO=true\n\n# Informar se é necessário obter áudio dos vídeos\n# Se dejesar deixe 'true' para o out-youtube extrair áudio ds vídeos\n#\nAUDIO=false\n\n# Obter as legendas do vídeo que estão no youtube.\n# Essa opção só será válida se o VIDEO estiver true\n#\nSUBTITLE=true\n\n# obter as legendas automáticas do youtube\n# Essa opção só será válida se o VIDEO estiver true\n# \nAUTO_SUBTITLE=true\n\n# Caso queira especificar quais linguagens o out-youtube deve  fazer download\n# se estiver disponível no vídeo\n# Se estiver disponível serão baixados:\n# gu | zh-Hans | zh-Hant | gd | ga | gl | lb | la | lo | tt | tr | lv | lt | tk | th |\n# tg | te | fil | haw | yi | ceb | yo | de | da | el | eo | en | eu | et | es | ru |\n# rw | ro | bn | be | bg | uk | jv | bs | ja | or | xh | co | ca | cy | cs | ps | pt |\n# pa | vi | pl | hy | hr | ht | hu | hmn | hi | ha | mg | uz | ml | mn | mi | mk | ur |\n# mt | ms | mr | ug | ta | my | af | sw | is | am | it | iw | sv | ar | su | zu | az |\n# id | ig | nl | no | ne | ny | fr | ku | fy | fa | fi | ka | kk | sr | sq | ko | kn |\n# km | st | sk | si | so | sn | sm | sl | ky | sd\n# Exemplo LANG=en,fr,pt----------- en=inglês - fr=francês - pt=português\n# Se estiver vazio ele deve baixar todas as legendas disponíveis\n#\nLANGUAGE=\n" >> $1
+echo -e "# Esse arquivo será usado para guardar as informações para fazer download\
+\n# do conteúdo do canal. Aqui contém informações necessárias que será usado\
+\n# pelo out-youtube.\
+\n#\
+\n#\
+\n# Esse arquivo contém as seguintes informações:\
+\n# API_KEY: Sua chave para acessar API do youtube. \
+\n# \
+\n# CHANNEL_YOUTUBE: seu canal desejado para baixar o conteúdo.\
+\n#\
+\n# USER_YOUTUBE: usuário do youtube que tem o canal para baixar o conteúdo.\
+\n#\
+\n# DIRECTORY: qual pasta os arquivos serão armazenados\
+\n#\
+\n# VIDEO: download videos\
+\n#\
+\n# AUDIO: obter áudio\
+\n#\
+\n# SUBTITLE: download legenda youtube\
+\n# ---------------------------------------------------------------\
+\n#\
+\n# Para criar ou substituir esse arquivo use 'out-youtube out <diretório>'. O diretório\
+\n# é aonde o arquivo ficará e recomendamos colocar na pasta que o conteúdo do youtube\
+\n# colocado.\n\n\
+\n# A chave API do youtube que será usada para ter aceso a informações do canal.\
+\n# criar uma API_KEY\
+\n#\nAPI_KEY=\n\n\
+\n# O ID do canal desejado é similar a esse UCgnYFet4mgK-7SpNJoI6b_A\
+\n# A informação do Channel geralmente está na url do \
+\n# canal https://www.youtube.com/channel/UCgnYFet4mgK-7SpNJoI6b_A\
+\n# Talvez precise atualizar a paǵina do canal para mostrar o ID do canal\
+\n# Você deve colocar o valor no CHANNEL_YOUTUBE ou colocar o USER_YOUTUBE. Caso os dois\
+\n# estejam definidos o out-youtube terá preferência no CHANNEL_YOUTUBE\
+\n#\nCHANNEL_YOUTUBE=\n\
+\n# Para encontrar o id e colocar no CHANNEL_YOUTUBE ou user no USER_YOUTUBE pode ser\
+\n# um pouco chato para achar o que pode ajudar com esse link \
+\n# https://support.google.com/youtube/answer/6180214?hl=en\
+\n# Colocar o USER_YOUTUBE do canal exemplo: dreamtheater (https://www.youtube.com/user/dreamtheater)\
+\n# \nUSER_YOUTUBE=\n\
+\n# Esse valor é o local aonde os conteúdos do canal serão armazenados. Esse valor precisa\
+\n# estar com '/' no final senão o out-youtube interpretará como um prefixo para os arquivos.\
+\n# Esse local deverá estar criado antes de chamar o out-youtube pois ele não criará pastas\
+\n# e recomendando usar caminho completo para a pasta\
+\n#\nDIRECTORY=./\n\
+\n# Informação sobre o download do conteúdo \
+\n# opções:\
+\n# -- video\
+\n# -- audio\
+\n# -- legendas\n\
+\n# Informar se é necessário baixar o vídeo do canal\
+\n# Se desejar deixe 'true' para o out-youtube fazer download dos vídeos\
+\n#\nVIDEO=true\n\
+\n# Informar se é necessário obter áudio dos vídeos\
+\n# Se dejesar deixe 'true' para o out-youtube extrair áudio ds vídeos\
+\n#\nAUDIO=false\n\
+\n# Obter as legendas do vídeo que estão no youtube.\
+\n# Essa opção só será válida se o VIDEO estiver true\
+\n#\nSUBTITLE=true\n\
+\n# obter as legendas automáticas do youtube\
+\n# Essa opção só será válida se o VIDEO estiver true\
+\n# \nAUTO_SUBTITLE=true\n\
+\n# Caso queira especificar quais linguagens o out-youtube deve  fazer download\
+\n# se estiver disponível no vídeo\
+\n# Se estiver disponível serão baixados:\
+\n# gu | zh-Hans | zh-Hant | gd | ga | gl | lb | la | lo | tt | tr | lv | lt | tk | th |\
+\n# tg | te | fil | haw | yi | ceb | yo | de | da | el | eo | en | eu | et | es | ru |\
+\n# rw | ro | bn | be | bg | uk | jv | bs | ja | or | xh | co | ca | cy | cs | ps | pt |\
+\n# pa | vi | pl | hy | hr | ht | hu | hmn | hi | ha | mg | uz | ml | mn | mi | mk | ur |\
+\n# mt | ms | mr | ug | ta | my | af | sw | is | am | it | iw | sv | ar | su | zu | az |\
+\n# id | ig | nl | no | ne | ny | fr | ku | fy | fa | fi | ka | kk | sr | sq | ko | kn |\
+\n# km | st | sk | si | so | sn | sm | sl | ky | sd\
+\n# Exemplo LANG=en,fr,pt----------- en=inglês - fr=francês - pt=português\
+\n# Se estiver vazio ele deve baixar todas as legendas disponíveis\
+\n#\
+\nLANGUAGE=\n" >> $1
 
 }
 
