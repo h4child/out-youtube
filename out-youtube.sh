@@ -128,39 +128,42 @@ echo -e "# Esse arquivo será usado para guardar as informações para fazer dow
 
 function add_data_channel() {
 
-    # value_channel_title
-    # value_channel_description
-    # value_channel_data
-    # value_channel_country
-    # value_channel_high_url
-    # value_channel_uploads
-
-    if [[ ! -s $file_dados_canais ]]; then
-        > $file_dados_canais
-        echo "Título: $value_channel_title" >> $file_dados_canais
-        echo "Description: $value_channel_description" >> $file_dados_canais
-        echo "Data: $value_channel_data" >> $file_dados_canais
-        echo "País: $value_channel_country" >> $file_dados_canais
-        echo "Id do canal: $CHANNEL_YOUTUBE" >> $file_dados_canais
-        echo "Uploads: $value_channel_uploads" >> $file_dados_canais
-    fi
-
+# value_channel_title
+# value_channel_description
+# value_channel_highurl
+# value_channel_data
+# value_channel_country
+# value_channel_uploads
+# value_channel_videocount
+# value_channel_viewcount
 
     if [[ ! -s "$file_img_channel" ]];then
         echo -e $B_YELLOW"Baixando imagem do canal . . . ${RESET}"
-        wget -O "$file_img_channel" "$value_channel_high_url"
+        wget -O "$file_img_channel" "$value_channel_highurl"
 
         if [[ $? -ne 0 ]];then
-            echo -e "${RED}Erro download capa do canal"
+            echo -e "${RED}Erro download capa do canal. link ${value_channel_highurl}"
             exit 1
         fi
     else
-        echo -e $B_YELLOW"Já existe um capa.jpg no $DIRECTORY"$RESET 
+        echo -e $B_YELLOW"Já existe um capa.jpg no ${DIRECTORY}${RESET}\n"
     fi
 
+    if [[ ! -s $file_dados_canais ]]; then
+        > $file_dados_cavideocount=nais
+        echo -e "Título: ${value_channel_title} \n\
+Description: ${value_channel_description} \n\
+Data: ${value_channel_data} \n\
+País: ${value_channel_country} \n\
+Id do canal: ${CHANNEL_YOUTUBE} \n\
+Uploads: ${value_channel_uploads}\n\
+vídeos no canal: ${value_channel_videocount}\n\
+visualização do canal: ${value_channel_viewcount}" >> $file_dados_canais
+    fi
+videocount=
 }
 
-#função inseri as informações no arquivo dados-video
+# função inseri as informações no arquivo dados-video
 function add_data_video() {
 
     filename_video=
@@ -169,7 +172,7 @@ function add_data_video() {
     id_video=
 
 
-#youtube-dl retorna o o diretório do out-config nome do arquivo e a extensão
+# youtube-dl retorna o o diretório do out-config nome do arquivo e a extensão
     path=$(youtube-dl -o "$DIRECTORY%(title)s-%(id)s.%(ext)s" -f [ext=mp4] --get-filename "https://www.youtube.com/watch?v=$value_video_id")
 
     #retona apenas nome e a extensão
@@ -180,14 +183,14 @@ function add_data_video() {
 
     filename_txt="$DIRECTORY$filename.txt"
 
-#verifica se VIDEO_QUALITY tem bestvideo e worsevideo. Caso tenha 'none' ou vazio o download não é feito como as legendas
+# verifica se VIDEO_QUALITY tem bestvideo e worsevideo. Caso tenha 'none' ou vazio o download não é feito como as legendas
     if [[ $VIDEO =~ ^"true" ]];then
         filename_video="$path"
         echo -e $B_YELLOW"Video $value_video_title${RESET}"
         if [[ ! -s  "$path" ]];then #verifica se o vídeo baixado já foi baixado naquel diretório
 
             while true; do
-                youtube-dl  -o "$DIRECTORY%(title)s-%(id)s.%(ext)s"  $([[ $SUBTITLE =~ ^(TRUE|true)$ ]] && echo "--write-sub " || echo ) $([[ $AUTO_SUBTITLE =~ ^(TRUE|true)$ ]] && echo "--write-auto-sub " || echo ) $([[ -n $LANGUAGE ]] && echo "--sub-lang $LANGUAGE" || echo ) "https://www.youtube.com/watch?v=$value_video_id"
+                youtube-dl  -o "$DIRECTORY%(title)s-%(id)s.%(ext)s" -f [ext=mp4] $([[ $SUBTITLE =~ ^(TRUE|true)$ ]] && echo "--write-sub " || echo ) $([[ $AUTO_SUBTITLE =~ ^(TRUE|true)$ ]] && echo "--write-auto-sub " || echo ) $([[ -n $LANGUAGE ]] && echo "--sub-lang $LANGUAGE" || echo ) "https://www.youtube.com/watch?v=$value_video_id"
                 return_youtube=$?
 
                 # return youtube-dl = $?
@@ -279,7 +282,7 @@ function add_data_video() {
 }
 
 
-#primeiro if serve para opção de criar o out-config
+# primeiro if serve para opção de criar o out-config
 if [[ "$1" == "out" ]] && [[ -n "$2" ]]; then
 
     [[ ${2} = "." ]] && set -- "out" "./"; [[ ${2} = ".." ]] && set -- "out" "../";
@@ -305,10 +308,10 @@ if [[ "$1" == "out" ]] && [[ -n "$2" ]]; then
     add_config $path_config #apenas para inserir conteúdo
     exit 0
 
-#segundo if testa se o arquivo out-config está disponível
-#[ -s "$1" ] = caso out-config foi renomeado, verifica se o arquivo $1 existe
-#[ -s "out-config" ] = out-config está no diretório  atual. Nesse caso não precisa inserir out-config
-#[ -d "$1""out-config" ] = apenas inseriu o diretório aonde out-config está
+# segundo if testa se o arquivo out-config está disponível
+# [ -s "$1" ] = caso out-config foi renomeado, verifica se o arquivo $1 existe
+# [ -s "out-config" ] = out-config está no diretório  atual. Nesse caso não precisa inserir out-config
+# [ -d "$1""out-config" ] = apenas inseriu o diretório aonde out-config está
 elif [[ -s "$1" ]] || [[ -s "out-config" ]] || [[ -d "${1}out-config" ]]; then
 
     #se $1 é vazio então $1=out-config
@@ -339,11 +342,12 @@ fi
 
 
 ######## Aqui vai começar buscar informação do canal através do wget ########
-base_url_channel="https://www.googleapis.com/youtube/v3/channels?part=contentDetails,snippet&"
+base_url_channel="https://www.googleapis.com/youtube/v3/channels?\
+part=contentDetails,snippet,statistics&"
+
 file_json_channel="/tmp/channel-$$"
 error_json_channel="/tmp/channel_error-$$"
 
-echo ${CHANNEL_YOUTUBE}
 
 if [[ -n ${CHANNEL_YOUTUBE} ]];then
     base_url_channel="${base_url_channel}id=${CHANNEL_YOUTUBE}&key="
@@ -369,7 +373,7 @@ if [[ $return_wget -eq 4 ]];then
     echo -e $B_RED$(tail -1 "/tmp/channel_error-$$")$RESET
     exit 1
 
-#Conexão foi feita, porém o servidor respondeu um erro. Server issued an error response.
+# Conexão foi feita, porém o servidor respondeu um erro. Server issued an error response.
 elif [[ $return_wget -eq 8 ]];then
     if [[ $(sed -n '5p' "/tmp/channel_error-$$") =~ 'ERRO 400: Bad Request' ]]; then
         echo -e $B_RED"API_KEY inválida: $API_KEY"
@@ -396,7 +400,7 @@ elif [[ $return_wget -ne 0 ]];then
     echo ${B_RED}"link: $base_url_channel${RESET}"
     exit 1
 
-#Conexão foi feita e retornou valor normal. Mas o resultado é zero que indica que não existe esse canal
+# Conexão foi feita e retornou valor normal. Mas o resultado é zero que indica que não existe esse canal
 elif [[ $(cat "/tmp/channel-$$" | jq .pageInfo.totalResults) -eq 0 ]];then
     echo -e $B_RED"Youtube não encontrou" $([[ -n $CHANNEL_YOUTUBE ]] && echo "CHANNEL_YOUTUBE do canal: $CHANNEL_YOUTUBE" || echo "USER_YOUTUBE do canal: $USER_YOUTUBE") $RESET
     echo 
@@ -406,43 +410,58 @@ fi
 
 json_channel=
 
-#título canal
+# título canal
 json_channel=$(cat $file_json_channel |jq .items[0].snippet.title)
-value_channel_title=$( [[ $json_channel != "null" ]] && echo "${json_channel:1:-1}" || echo "")
+value_channel_title=$( [[ $json_channel = "null" ]] || echo "${json_channel:1:-1}")
 
-#decrição do canal
+# decrição do canal
 json_channel=$(cat $file_json_channel |jq .items[0].snippet.description)
-value_channel_description=$( [[ $json_channel != "null" ]] && echo "${json_channel:1:-1}" || echo "")
+value_channel_description=$( [[ $json_channel = "null" ]] || echo "${json_channel:1:-1}")
 
-#capa canal
+# capa canal
 json_channel=$(cat $file_json_channel |jq .items[0].snippet.thumbnails.high.url)
-value_channel_high_url=$( [[ $json_channel != "null" ]] && echo "${json_channel:1:-1}" || echo "")
+value_channel_highurl=$( [[ $json_channel = "null" ]] || echo "${json_channel:1:-1}")
 
-#data criação do canal
+# data criação do canal
 json_channel=$(cat $file_json_channel |jq .items[0].snippet.publishedAt)
-value_channel_data=$( [[ $json_channel != "null" ]] && echo "${json_channel:1:-1}" || echo "")
+value_channel_data=$( [[ $json_channel = "null" ]] || echo "${json_channel:1:-1}")
 
-#país do canal (pode não conter qualquer país)
+# país do canal (pode não conter qualquer país)
 json_channel=$(cat $file_json_channel |jq .items[0].snippet.country)
-value_channel_country=$( [[ $json_channel != "null" ]] && echo "${json_channel:1:-1}" || echo "")
+value_channel_country=$( [[ $json_channel = "null" ]] || echo "${json_channel:1:-1}")
 
-#id playlist
+# id playlist
 json_channel=$(cat $file_json_channel |jq .items[0].contentDetails.relatedPlaylists.uploads)
-value_channel_uploads=$( [[ $json_channel != "null" ]] && echo "${json_channel:1:-1}" || echo "")
+value_channel_uploads=$( [[ $json_channel = "null" ]] || echo "${json_channel:1:-1}")
+
+# números de vídeos
+json_channel=$(cat $file_json_channel |jq .items[0].statistics.videoCount)
+value_channel_videocount=$( [[ $json_channel = "null" ]] || echo "${json_channel:1:-1}")
+
+# visualização
+json_channel=$(cat $file_json_channel |jq .items[0].statistics.viewCount)
+value_channel_viewcount=$( [[ $json_channel = "null" ]] || echo "${json_channel:1:-1}")
+
 
 rm "$error_json_channel"
 rm "$file_json_channel"
 
 file_dados_canais="$DIRECTORY""dados-canal"
 file_img_channel="$DIRECTORY""capa.jpg"
-#função add informações do canal
+
+# função add informações do canal
 add_data_channel
 
 
 echo -e $B_YELLOW"baixando conteúdo do canal . . . ${RESET}"
 
 while true; do
-    base_url_playlist="https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&pageToken=$next_page_token&playlistId=$value_channel_uploads&key=$API_KEY"
+    base_url_playlist="https://www.googleapis.com/youtube/v3/playlistItems?\
+part=snippet&\
+maxResults=50&\
+pageToken=$next_page_token&\
+playlistId=$value_channel_uploads&\
+key=$API_KEY"
     file_json_video="/tmp/videos_$$"
     error_json_video="/tmp/video_error_$$"
 
