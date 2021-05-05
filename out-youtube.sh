@@ -178,7 +178,10 @@ function get_data_video() {
 
 
 # youtube-dl retorna o o diretório do out-config nome do arquivo e a extensão
-    path=$(youtube-dl -o "$DIRECTORY%(title)s-%(id)s.%(ext)s" -f [ext=mp4] --get-filename "https://www.youtube.com/watch?v=$value_video_id")
+    path=$(youtube-dl -o "$DIRECTORY%(title)s-%(id)s.%(ext)s" \
+-f [ext=mp4] \
+--get-filename \
+"https://www.youtube.com/watch?v=$value_video_id")
 
     #retona apenas nome e a extensão
     filename_ext=$(basename "$path")
@@ -195,7 +198,12 @@ function get_data_video() {
         if [[ ! -s  "$path" ]];then #verifica se o vídeo baixado já foi baixado naquel diretório
 
             while true; do
-                youtube-dl  -o "$DIRECTORY%(title)s-%(id)s.%(ext)s" -f [ext=mp4] $([[ $SUBTITLE =~ ^(TRUE|true)$ ]] && echo "--write-sub " || echo ) $([[ $AUTO_SUBTITLE =~ ^(TRUE|true)$ ]] && echo "--write-auto-sub " || echo ) $([[ -n $LANGUAGE ]] && echo "--sub-lang $LANGUAGE" || echo ) "https://www.youtube.com/watch?v=$value_video_id"
+                youtube-dl  -o "$DIRECTORY%(title)s-%(id)s.%(ext)s" \
+-f [ext=mp4] \
+$([[ $SUBTITLE =~ ^(TRUE|true)$ ]] && echo "--write-sub ") \
+$([[ $AUTO_SUBTITLE =~ ^(TRUE|true)$ ]] && echo "--write-auto-sub ") \
+$([[ -n $LANGUAGE ]] && echo "--sub-lang $LANGUAGE") \
+"https://www.youtube.com/watch?v=$value_video_id"
                 return_youtube=$?
 
                 # return youtube-dl = $?
@@ -224,7 +232,9 @@ function get_data_video() {
         if [[ ! -s "$DIRECTORY$filename.mp3" ]];then
 
             while true; do
-                youtube-dl  -o "$DIRECTORY%(title)s-%(id)s.%(ext)s" -x --audio-format mp3 "https://www.youtube.com/watch?v=$value_video_id"
+                youtube-dl  -o "$DIRECTORY%(title)s-%(id)s.%(ext)s" \
+-x --audio-format mp3 \
+"https://www.youtube.com/watch?v=$value_video_id"
                 return_youtube=$?
 
                 if [[ return_youtube -ne 0 ]]; then
@@ -241,13 +251,21 @@ function get_data_video() {
                     capa_video="$DIRECTORY"$id_video"$capa"
                     wget -O "$capa_video" $value_video_high_url
 
-                    ffmpeg -i "$DIRECTORY$$$filename.mp3" -i "$capa_video" -metadata title="$value_video_title" -metadata album="$value_channel_title" -metadata artist="$value_channel_title" -metadata comment="Feito pelo out-youtube" -write_id3v1 true -metadata date="${value_video_date:0:4}" -map_metadata 0 -c:a copy -c:v copy  -map 0 -map 1 "$DIRECTORY$filename.mp3" < /dev/null
+                    ffmpeg -i "$DIRECTORY$$$filename.mp3" -i "$capa_video" \
+-metadata title="$value_video_title" \
+-metadata album="$value_channel_title" \
+-metadata artist="$value_channel_title" \
+-metadata comment="Feito pelo out-youtube" \
+-write_id3v1 true \
+-metadata date="${value_video_date:0:4}" \
+-map_metadata 0 \
+-c:a copy -c:v copy  -map 0 -map 1 \
+"$DIRECTORY$filename.mp3" < /dev/null
 
                     rm "$DIRECTORY$$$filename.mp3"
                     rm "$capa_video"
 
                     break
-
                 fi
             done
         else
@@ -261,26 +279,18 @@ function get_data_video() {
 
         #varios echos que apenas inseri informações do vídeo, áudio ou ambos
         echo "TÍTULO: ${1}" >> "${filename_txt}"
-
         echo "DATA: ${2}" >> "${filename_txt}"
-
         echo "DESCRIÇÃO: ${3}" >> "${filename_txt}"
-
         echo "CAMINHO VÍDEO: $filename_video" >> "${filename_txt}"
-
         echo "CAMINHO AUDIO: $filename_audio" >> "${filename_txt}"
-
         echo "CAPA DO VÍDEO: ${4}" >> "${filename_txt}"
-
         echo "ID CANAL:${6}" >> "${filename_txt}"
-
         echo  "LINK: www.youtube.com/watch?v=${5}" >> "${filename_txt}"
-
         echo  >> "${filename_txt}"
     fi
 
     echo -e $U_RESET"$([[ ${#value_video_title} -gt 25 ]] && echo "${value_video_title:0:25}... :$DIRECTORY""dados-video" || echo "$value_video_title :${filename_txt}") ${RESET}"
-    
+
     echo -e $B_YELLOW"---------------------${RESET}"
     echo
 
