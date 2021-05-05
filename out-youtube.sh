@@ -43,6 +43,12 @@ GREEN="\033[33;32m"; B_GREEN="\e[1;32m" #verde
 YELLOW="\033[33;33m"; B_YELLOW="\e[1;33m" #amarelo
 CYAN="\e[0;36m"; B_CYAN="\e[1;36m" #ciano
 
+# mostra strings finais quando termina sem erros
+function print_final_succcess () {
+    echo -e "${B_RESET}${DIRECTORY}${RESET}"; echo -e "${B_RESET}Concluído${RESET}"
+}
+
+
 # Função que inseri conteúdo do arquivo out-config
 # Dentro da função echo  apenas tem echo no qual será inserido no out-config
 function add_config(){
@@ -126,7 +132,7 @@ echo -e "# Esse arquivo será usado para guardar as informações para fazer dow
 }
 
 
-function add_data_channel() {
+function get_data_channel() {
 
 # value_channel_title
 # value_channel_description
@@ -160,11 +166,10 @@ Uploads: ${value_channel_uploads}\n\
 vídeos no canal: ${value_channel_videocount}\n\
 visualização do canal: ${value_channel_viewcount}" >> $file_dados_canais
     fi
-videocount=
 }
 
 # função inseri as informações no arquivo dados-video
-function add_data_video() {
+function get_data_video() {
 
     filename_video=
     filename_audio=
@@ -291,10 +296,7 @@ if [[ "$1" == "out" ]] && [[ -n "$2" ]]; then
 
     if [[ -s "${2}out-config" ]]; then
         read -p "subtituir o out config (sim):" replace
-        if [[ $replace != "sim" ]];then
-            echo "Não substituiu!"
-            exit 0
-        fi
+        [[ $replace != "sim" ]] && echo "Não substituiu!"; exit 0
     fi
 
     $( > $path_config)
@@ -302,8 +304,6 @@ if [[ "$1" == "out" ]] && [[ -n "$2" ]]; then
         echo "não foi possível criar arquivo ${path_config}"
         exit 1
     fi
-
-    chmod 755 $path_config
 
     add_config $path_config #apenas para inserir conteúdo
     exit 0
@@ -450,7 +450,7 @@ file_dados_canais="$DIRECTORY""dados-canal"
 file_img_channel="$DIRECTORY""capa.jpg"
 
 # função add informações do canal
-add_data_channel
+get_data_channel
 
 
 echo -e $B_YELLOW"baixando conteúdo do canal . . . ${RESET}"
@@ -514,7 +514,7 @@ key=$API_KEY"
         json_video=$(cat $file_json_video | jq .items[$id_video].snippet.channelId)
         value_video_channel_id=$( [[ $json_video != "null" ]] && echo "${json_video:1:-1}" || echo "")
 
-        add_data_video  "$value_video_title" "$value_video_date" "$value_video_description" "$value_video_high_url" "$value_video_id" "$value_video_channel_id"
+        get_data_video  "$value_video_title" "$value_video_date" "$value_video_description" "$value_video_high_url" "$value_video_id" "$value_video_channel_id"
     done
 
     if [[ $( cat $file_json_video| jq .nextPageToken) != "null" ]]; then
@@ -527,5 +527,4 @@ key=$API_KEY"
 
 done
 
-echo -e "${B_RESET}Concluído${RESET}"
-echo -e "${B_RESET}${DIRECTORY}${RESET}"
+print_final_succcess
