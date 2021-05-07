@@ -97,7 +97,7 @@ echo -e "# Esse arquivo será usado para guardar as informações para fazer dow
 \n# estar com '/' no final senão o out-youtube interpretará como um prefixo para os arquivos.\
 \n# Esse local deverá estar criado antes de chamar o out-youtube pois ele não criará pastas\
 \n# e recomendando usar caminho completo para a pasta\
-\n#\nDIRECTORY=./\n\
+\n#\nDIRECTORY=\`pwd\`\"/test/\"\n\
 \n# Informação sobre o download do conteúdo \
 \n# opções:\
 \n# -- video\
@@ -128,7 +128,7 @@ echo -e "# Esse arquivo será usado para guardar as informações para fazer dow
 \n# Exemplo LANG=en,fr,pt----------- en=inglês - fr=francês - pt=português\
 \n# Se estiver vazio ele deve baixar todas as legendas disponíveis\
 \n#\
-\nLANGUAGE=\n" >> $1
+\nLANGUAGE=\n" > $1
 
 
 }
@@ -527,7 +527,7 @@ if [[ "$1" == "out" ]] && [[ -n "$2" ]]; then
 
     if [[ -s "${2}out-config" ]]; then
         read -p "subtituir o out config (sim):" replace
-        [[ $replace != "sim" ]] && echo "Não substituiu!"; exit 0
+        [[ $replace != "sim" ]] && echo "Não substituiu! `exit 0`";
     fi
 
     $( > $path_config)
@@ -568,6 +568,8 @@ elif [[ -s "$1" ]] || [[ -s "out-config" ]] || [[ -d "${1}out-config" ]]; then
 
     if [[ $value_channel_videocount -ne 0 ]]; then
         handle_data_video
+    else
+        echo -e "${YELLOW}Sem vídeos no canal${RESET}"
     fi
 
     print_final_succcess
@@ -580,6 +582,4 @@ else
 
     exit 1
 fi
-
-#echo -e $B_YELLOW"baixando conteúdo do canal . . . ${RESET}"
 
