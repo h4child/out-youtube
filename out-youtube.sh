@@ -163,21 +163,21 @@ part=contentDetails,snippet,statistics&"
     # retorno 4 do wget -q é Network failure.
     if [[ $return_wget -eq 4 ]];then
         echo -e $B_RED"sem acesso a internet${RESET}"
-        echo -e $B_RED$(tail -1 "/tmp/channel_error-$$")$RESET
+        echo -e $B_RED$(tail -1 "${2}")$RESET
         exit 1
 
     # Conexão foi feita, porém o servidor respondeu um erro. Server issued an error response.
     elif [[ $return_wget -eq 8 ]];then
-        if [[ $(sed -n '5p' "/tmp/channel_error-$$") =~ 'ERRO 400: Bad Request' ]]; then
+        if [[ $(sed -n '5p' "${2}") =~ 'ERRO 400: Bad Request' ]]; then
             echo -e $B_RED"API_KEY inválida: $API_KEY"
             exit 1
 
-        elif [[ $(sed -n '4p' "/tmp/channel_error-$$") =~ '403 Forbidden'  ]]; then
+        elif [[ $(sed -n '4p' "${2}") =~ '403 Forbidden'  ]]; then
             echo -e $B_RED"Está faltando API_KEY" $RESET
             echo 
             exit 1
 
-        elif [[ $(sed -n '4p' "/tmp/channel_error-$$") =~ '400 Forbidden' ]]; then
+        elif [[ $(sed -n '4p' "${2}") =~ '400 Forbidden' ]]; then
             echo -e $B_RED"API_KEY inválida" $RESET
             echo 
             exit 1
@@ -193,7 +193,7 @@ part=contentDetails,snippet,statistics&"
         exit 1
 
     # Conexão foi feita e retornou valor normal. Mas o resultado é zero que indica que não existe esse canal
-    elif [[ $(cat "/tmp/channel-$$" | jq .pageInfo.totalResults) -eq 0 ]];then
+    elif [[ $(cat "${1}" | jq .pageInfo.totalResults) -eq 0 ]];then
         echo -e $B_RED"Youtube não encontrou" $([[ -n $CHANNEL_YOUTUBE ]] && echo "CHANNEL_YOUTUBE do canal: $CHANNEL_YOUTUBE" || echo "USER_YOUTUBE do canal: $USER_YOUTUBE") $RESET
         echo 
         exit 1
@@ -202,17 +202,19 @@ part=contentDetails,snippet,statistics&"
 
 }
 
-function get_data_video() {
+function get_data_playlist() {
+
+
     local base_url_playlist="https://www.googleapis.com/youtube/v3/playlistItems?\
 part=snippet&\
 maxResults=50&\
-pageToken=$next_page_token&\
-playlistId=$value_channel_uploads&\
+pageToken=${2}&\
+playlistId=${1}&\
 key=$API_KEY"
-    file_json_video="/tmp/videos_$$"
-    error_json_video="/tmp/video_error_$$"
+    local file_json_playlist="/tmp/playlist_$$"
+    local error_json_playlist="/tmp/playlist_error_$$"
 
-    wget -q -O "/tmp/videos_$$" "$base_url_playlist" 2> "/tmp/video_error_$$"
+    wget -q -O "${file_json_playlist}" "${base_url_playlist}" 2> "${error_json_playlist}"
     local return_wget=$?
 
     if [[ $return_wget -eq 4 ]];then
@@ -221,27 +223,52 @@ key=$API_KEY"
         exit 1
 
     elif [[ $return_wget -eq 8 ]];then
+
         if [[ $(tail -2 $error_json_video) =~ [0-9]+"-"[0-9]+"-"[0-9]+.*[0-9]+":"[0-9]+":"[0-9]+" ERRO 404: Not Found" ]]; then
             echo -e $B_GREEN"Não tem vídeos públicos no canal${RESET}"
             exit 1
         fi
+        exit 0
 
     elif [[ $return_wget -ne 0 ]];then
-        echo ${B_RED}"Erro a usar wget${RESET}"
-        echo ${B_RED}"link: $base_url_channel${RESET}"
+        echo -e ${B_RED}"Erro a usar wget${RESET}"
+        echo -e ${B_RED}"link: $base_url_channel${RESET}"
         exit 1
     fi
 
-    count_video=$(cat $file_json_video| jq '.items | length')
+    count_video=$(cat $file_json_playlist| jq '.items | length')
     if [[ $count_video -eq 0 ]];then
         echo -e "${GREEN}Não tem vídeos nesse canal!${RESET}"
-        break
     fi
 
+    return_get_data_playlist=$file_json_playlist
+}
+
+function get_data_video() {
+    # $1 - id do canal
+
+
+    local base_url_video="https://www.googleapis.com/youtube/v3/videos?\
+part=snippet,contentDetails,statistics,status&\
+id=${1}&\
+key=$API_KEY"
+    file_json_video="/tmp/videos_$$"
+    error_json_video="/tmp/video_error_$$"
+
+    wget -q -O "$file_json_video" "$base_url_video" 2> "${error_json_video}"
+    local return_wget=$?
+
+    if [[ $return_wget -ne 0 ]];then
+        echo -e "Erro obter informação do id ${1} na API youtube"
+        exit 0
+    fi
 }
 
 
 function get_img(){
+
+    # $1 - file
+    # $2 - url
 
     if [[ ! -s "${1}" ]];then
         wget -q -O "${1}" "${2}"
@@ -255,44 +282,57 @@ function get_img(){
 }
 
 
+
 function add_data_channel() {
 
-    # $1  - value_channel_title
-    # $2  - value_channel_description
-    # $3  - value_channel_highurl
-    # $4  - value_channel_data
-    # $5  - value_channel_country
-    # $6  - value_channel_uploads
-    # $7  - value_channel_videocount
-    # $8  - value_channel_viewcount
+    # $1 - value_channel_title
+    # $2 - value_channel_description
+    # $3 - value_channel_highurl
+    # $4 - value_channel_data
+    # $5 - value_channel_uploads
+    # $6 - value_channel_videocount
+    # $7 - value_channel_viewcount
 
+    local file_dados_canais="${DIRECTORY}dados-canal"
+
+    local file_img_channel="${DIRECTORY}capa_canal.jpg"
     get_img "$file_img_channel" "$value_channel_highurl"
 
     echo -e "${B_YELLOW}Inserindo informações do canal: $file_dados_canais${RESET}"
     if [[ ! -s $file_dados_canais ]]; then
         > $file_dados_canais
-        echo -e "Título: ${value_channel_title} \n\
-Description: ${value_channel_description} \n\
-Data: ${value_channel_data} \n\
-País: ${value_channel_country} \n\
-Id do canal: ${CHANNEL_YOUTUBE} \n\
-Uploads: ${value_channel_uploads}\n\
-vídeos no canal: ${value_channel_videocount}\n\
-visualização do canal: ${value_channel_viewcount}" >> $file_dados_canais
+        echo -e "Título: ${1} \n\
+Description: ${2} \n\
+Imagem: ${3} \n\
+Data: ${4} \n\
+Uploads: https://www.youtube.com/playlist?list=${5}\n\
+Canal: $( [[ -z ${CHANNEL_YOUTUBE} ]] && echo "${USER_YOUTUBE}" || echo "${CHANNEL_YOUTUBE}") \n\
+vídeos no canal: ${6}\n\
+visualização do canal: ${7}" >> $file_dados_canais
     fi
 
     echo; 
 
 }
 
+
 # função inseri as informações no arquivo dados-video
 function add_data_video() {
+    # $1 - value_video_id
+    # $2 - value_video_date
+    # $3 - value_video_title
+    # $4 - value_video_description
+    # $5 - value_video_img
+    # $6 - value_video_channeltitle
+    # $7 - value_video_duration
+    # $8 - value_video_definition
+    # $9 - value_video_caption
 
 # youtube-dl retorna o o diretório do out-config nome do arquivo e a extensão
-    path=$(youtube-dl -o "$DIRECTORY%(title)s-%(id)s.%(ext)s" \
+    local path=$(youtube-dl -o "$DIRECTORY%(title)s-%(id)s.%(ext)s" \
 -f [ext=mp4] \
 --get-filename \
-"https://www.youtube.com/watch?v=$value_video_id")
+$( [[ "${1}" =~ "/" ]] && echo "${1}" || echo "https://www.youtube.com/watch?v=${1}"))
 
     #retona apenas nome e a extensão
     filename_ext=$(basename "$path")
@@ -304,7 +344,7 @@ function add_data_video() {
 
 # verifica se VIDEO_QUALITY tem bestvideo e worsevideo. Caso tenha 'none' ou vazio o download não é feito como as legendas
     if [[ $VIDEO =~ ^"true" ]];then
-        echo -e "${B_RESET}Video: ${B_YELLOW}${value_video_title}${RESET}"
+        echo -e "${B_RESET}Video: ${B_YELLOW}${filename}.mp4${RESET}"
         filename_video="$path"
 
         if [[ ! -s  "$path" ]];then #verifica se o vídeo já foi baixado naquel diretório
@@ -314,14 +354,14 @@ function add_data_video() {
 $([[ $SUBTITLE =~ ^(TRUE|true)$ ]] && echo "--write-sub ") \
 $([[ $AUTO_SUBTITLE =~ ^(TRUE|true)$ ]] && echo "--write-auto-sub ") \
 $([[ -n $LANGUAGE ]] && echo "--sub-lang $LANGUAGE") \
-"https://www.youtube.com/watch?v=$value_video_id"
+$( [[ "${1}" =~ "/" ]] && echo "${1}" || echo "https://www.youtube.com/watch?v=${1}")
                 return_youtube=$?
 
                 # return youtube-dl = $?
                 if [[ return_youtube -ne 0 ]]; then
                     rm $path 2> /dev/null
-                    echo -e "${RED}Erro de baixar o vídeo https://www.youtube.com/watch?v=${value_video_id} . . ."
-                    echo -e "${YELLOW}Recomeçar Download https://www.youtube.com/watch?v=${value_video_id}"
+                    echo -e "${RED}Erro de baixar o vídeo https://www.youtube.com/watch?v=${value_playlist_videoId} . . .${RESET}"
+                    echo -e "${GREEN}Recomeçar Download https://www.youtube.com/watch?v=${value_playlist_videoId}${RESET}"
                     sleep 3
                     continue
                 else
@@ -330,14 +370,14 @@ $([[ -n $LANGUAGE ]] && echo "--sub-lang $LANGUAGE") \
 
             done
         else
-            echo -e $B_YELLOW"Já existe um $path no $DIRECTORY"$RESET 
+            echo -e "Já existe um \"${filename_ext}\" no \"${DIRECTORY}\"$RESET"
         fi
     fi
 
 # verifica se o AUDIO tem valor true para extrair apenas áudio.
     if [[ $AUDIO =~ ^(TRUE|true)$ ]];then
         filename_audio=${DIRECTORY}${filename}".mp3"
-        echo -e "${B_RESET}Audio: ${B_YELLOW}${value_video_title}${RESET}"
+        echo -e "${B_RESET}Audio: ${B_YELLOW}${filename}.mp3${RESET}"
 
         #verifica se o arquivo de ádudio já existe nesse diretório
         if [[ ! -s "$DIRECTORY$filename.mp3" ]];then
@@ -345,12 +385,12 @@ $([[ -n $LANGUAGE ]] && echo "--sub-lang $LANGUAGE") \
             while true; do
                 youtube-dl  -o "$DIRECTORY%(title)s-%(id)s.%(ext)s" \
 -x --audio-format mp3 \
-"https://www.youtube.com/watch?v=$value_video_id"
+$( [[ "${1}" =~ "/" ]] && echo "${1}" || echo "https://www.youtube.com/watch?v=${1}")
                 return_youtube=$?
 
                 if [[ return_youtube -ne 0 ]]; then
-                    echo -e "${RED}Erro de extrair audio do vídeo https://www.youtube.com/watch?v=${value_video_id} . . ."
-                    echo -e "${YELLOW}Recomeçar Download para extrair áudio https://www.youtube.com/watch?v=${value_video_id}${RESET}"
+                    echo -e "${RED}Erro de extrair audio do vídeo https://www.youtube.com/watch?v=${value_playlist_videoId} ${RESET}. . ."
+                    echo -e "${GREEN}Recomeçar Download para extrair áudio https://www.youtube.com/watch?v=${value_playlist_videoId}${RESET}"
                     echo 
 
                     sleep 3
@@ -358,30 +398,28 @@ $([[ -n $LANGUAGE ]] && echo "--sub-lang $LANGUAGE") \
                 else
 
                     mv "${DIRECTORY}${filename}.mp3" "${DIRECTORY}$$${filename}.mp3"
-                    id_video=$((id_video + 1))
-                    capa_video="$DIRECTORY"$id_video"$capa"
-                    wget -q -O "$capa_video" $value_video_high_url
+                    capa_video="${DIRECTORY}${filename}.jpg"
+                    wget -q -O "$capa_video" ${5}
 
                     ffmpeg -i "$DIRECTORY$$$filename.mp3" -i "$capa_video" \
 -loglevel 24 \
--metadata title="$value_video_title" \
--metadata album="$value_channel_title" \
--metadata artist="$value_channel_title" \
--metadata comment="Feito pelo out-youtube" \
+-metadata title="${3}" \
+-metadata album="${6}" \
+-metadata artist="${6}" \
+-metadata comment="Feito pelo out-youtube: https://github.com/h4child/out-youtube" \
 -write_id3v1 true \
--metadata date="${value_video_date:0:4}" \
+-metadata date="${2:0:4}" \
 -map_metadata 0 \
 -c:a copy -c:v copy  -map 0 -map 1 \
-"$DIRECTORY$filename.mp3" < /dev/null >/dev/null
+"$DIRECTORY$filename.mp3" < /dev/null
 
                     rm "$DIRECTORY$$$filename.mp3"
-                    rm "$capa_video"
 
                     break
                 fi
             done
         else
-            echo -e $B_YELLOW"Já existe um $DIRECTORY$filename.mp3 no $DIRECTORY"$RESET
+            echo -e "Já existe um \"${filename}.mp3\" no \"$DIRECTORY\""$RESET
         fi
     fi
 
@@ -389,18 +427,58 @@ $([[ -n $LANGUAGE ]] && echo "--sub-lang $LANGUAGE") \
     if [[ ! -s "$filename_txt" ]];then
         >"$filename_txt"
 
-        echo -e "${B_RESET}XT: ${B_YELLOW}${value_video_title}${RESET}"
+        echo -e "${B_RESET}TXT: ${B_YELLOW}${filename}.txt${RESET}"
 
         #varios echos que apenas inseri informações do vídeo, áudio ou ambos
-        echo "TÍTULO: ${1}" >> "${filename_txt}"
-        echo "DATA: ${2}" >> "${filename_txt}"
-        echo "DESCRIÇÃO: ${3}" >> "${filename_txt}"
-        echo "CAMINHO VÍDEO: $filename_video" >> "${filename_txt}"
-        echo "CAMINHO AUDIO: $filename_audio" >> "${filename_txt}"
-        echo "CAPA DO VÍDEO: ${4}" >> "${filename_txt}"
-        echo "ID CANAL:${6}" >> "${filename_txt}"
-        echo  "LINK: www.youtube.com/watch?v=${5}" >> "${filename_txt}"
+        echo "TÍTULO: ${3}" >> "${filename_txt}"
+        echo -e "TÍTULO: ${CYAN}${3}${RESET}"
         echo  >> "${filename_txt}"
+
+        echo "DATA: ${2}" >> "${filename_txt}"
+        echo -e "DATA: ${CYAN}${2}${RESET}"
+        echo  >> "${filename_txt}"
+
+        echo "DESCRIÇÃO: ${4}" >> "${filename_txt}"
+        echo -e "DESCRIÇÃO: ${CYAN}$([[ ${#4} -gt 80 ]] && echo "${4:0:80} . . ." || echo "${4}")${RESET}"
+        echo  >> "${filename_txt}"
+
+        echo "CAMINHO VÍDEO: $filename_video" >> "${filename_txt}"
+        echo -e "CAMINHO VÍDEO: ${CYAN}$filename_video${RESET}"
+        echo  >> "${filename_txt}"
+
+        echo "CAMINHO AUDIO: $filename_audio" >> "${filename_txt}"
+        echo -e "CAMINHO AUDIO: ${CYAN}$filename_audio${RESET}"
+        echo  >> "${filename_txt}"
+
+        echo "CAPA DO VÍDEO: ${capa_video}" >> "${filename_txt}"
+        echo -e "CAPA DO VÍDEO: ${CYAN}${capa_video}${RESET}"
+        echo  >> "${filename_txt}"
+
+        echo "ID CANAL: $( [[ -z ${CHANNEL_YOUTUBE} ]] && echo "${USER_YOUTUBE}" || echo "${CHANNEL_YOUTUBE}")" >> "${filename_txt}"
+        echo -e "ID CANAL: ${CYAN}$( [[ -z ${CHANNEL_YOUTUBE} ]] && echo "${USER_YOUTUBE}" || echo "${CHANNEL_YOUTUBE}")${RESET}"
+        echo  >> "${filename_txt}"
+
+        echo "lINK DA CAPA: ${5}" >> "${filename_txt}"
+        echo -e "lINK DA CAPA: ${CYAN}${5}${RESET}"
+        echo  >> "${filename_txt}"
+
+        echo "LINK: www.youtube.com/watch?v=${1}" >> "${filename_txt}"
+        echo -e "LINK: ${CYAN}www.youtube.com/watch?v=${1}${RESET}"
+        echo  >> "${filename_txt}"
+
+        echo "DURAÇÃO: ${7}" >> "${filename_txt}"
+        echo -e "DURAÇÃO: ${CYAN}${7}${RESET}"
+        echo  >> "${filename_txt}"
+
+        echo "QUALIDADE: ${8}" >> "${filename_txt}"
+        echo -e "QUALIDADE: ${CYAN}${8}${RESET}"
+        echo  >> "${filename_txt}"
+
+        echo "LEGENDA (NÃO AUTOMÁTICA): ${9}" >> "${filename_txt}"
+        echo -e "LEGENDA (NÃO AUTOMÁTICA): ${CYAN}${9}${RESET}"
+
+        echo  >> "${filename_txt}"
+        echo 
 
         echo "inserido"
     fi
@@ -415,99 +493,135 @@ $([[ -n $LANGUAGE ]] && echo "--sub-lang $LANGUAGE") \
 
 function handle_data_channel() {
 
-    file_json_channel="/tmp/channel-$$"
-    error="/tmp/error_$$"
+    local file_json_channel="/tmp/channel-$$"
+    local error="/tmp/error_$$"
 
     echo -e "${B_YELLOW}Obter informações do canal . . . ${RESET}"
     get_data_channel $file_json_channel $error
 
-    # título canal
-    json_channel=$(cat $file_json_channel |jq .items[0].snippet.title)
-    value_channel_title=$( [[ $json_channel = "null" ]] || echo "${json_channel:1:-1}")
+    # 0 título canal
+    local json_channel=$(cat $file_json_channel |jq .items[0].snippet.title)
+    local value_channel_title=$( [[ $json_channel = "null" ]] || echo "${json_channel:1:-1}")
 
-    # decrição do canal
-    json_channel=$(cat $file_json_channel |jq .items[0].snippet.description)
-    value_channel_description=$( [[ $json_channel = "null" ]] || echo "${json_channel:1:-1}")
+    # 1 decrição do canal
+    local json_channel=$(cat $file_json_channel |jq .items[0].snippet.description)
+    local value_channel_description=$( [[ $json_channel = "null" ]] || echo "${json_channel:1:-1}")
 
-    # capa canal
-    json_channel=$(cat $file_json_channel |jq .items[0].snippet.thumbnails.high.url)
-    value_channel_highurl=$( [[ $json_channel = "null" ]] || echo "${json_channel:1:-1}")
+    # 2 capa canal
+    local json_channel=$(cat $file_json_channel |jq .items[0].snippet.thumbnails.high.url)
+    local value_channel_highurl=$( [[ $json_channel = "null" ]] || echo "${json_channel:1:-1}")
 
-    # data criação do canal
-    json_channel=$(cat $file_json_channel |jq .items[0].snippet.publishedAt)
-    value_channel_data=$( [[ $json_channel = "null" ]] || echo "${json_channel:1:-1}")
+    # 3 data criação do canal
+    local json_channel=$(cat $file_json_channel |jq .items[0].snippet.publishedAt)
+    local value_channel_data=$( [[ $json_channel = "null" ]] || echo "${json_channel:1:-1}")
 
-    # país do canal (pode não conter qualquer país)
-    json_channel=$(cat $file_json_channel |jq .items[0].snippet.country)
-    value_channel_country=$( [[ $json_channel = "null" ]] || echo "${json_channel:1:-1}")
+    # 4 id playlist
+    local json_channel=$(cat $file_json_channel |jq .items[0].contentDetails.relatedPlaylists.uploads)
+    local value_channel_uploads=$( [[ $json_channel = "null" ]] || echo "${json_channel:1:-1}")
 
-    # id playlist
-    json_channel=$(cat $file_json_channel |jq .items[0].contentDetails.relatedPlaylists.uploads)
-    value_channel_uploads=$( [[ $json_channel = "null" ]] || echo "${json_channel:1:-1}")
+    # 5 números de vídeos
+    local json_channel=$(cat $file_json_channel |jq .items[0].statistics.videoCount)
+    local value_channel_videocount=$( [[ $json_channel = "null" ]] || echo "${json_channel:1:-1}")
 
-    # números de vídeos
-    json_channel=$(cat $file_json_channel |jq .items[0].statistics.videoCount)
-    value_channel_videocount=$( [[ $json_channel = "null" ]] || echo "${json_channel:1:-1}")
-
-    # visualização
-    json_channel=$(cat $file_json_channel |jq .items[0].statistics.viewCount)
-    value_channel_viewcount=$( [[ $json_channel = "null" ]] || echo "${json_channel:1:-1}")
+    # 6 visualização
+    local json_channel=$(cat $file_json_channel |jq .items[0].statistics.viewCount)
+    local value_channel_viewcount=$( [[ $json_channel = "null" ]] || echo "${json_channel:1:-1}")
 
     rm "$file_json_channel"
     rm "$error"
-
-    file_dados_canais="$DIRECTORY""dados-canal"
-    file_img_channel="$DIRECTORY""capa.jpg"
 
     # função add informações do canal
     add_data_channel "$value_channel_title" \
 "$value_channel_description" \
 "$value_channel_highurl" \
 "$value_channel_data" \
-"$value_channel_country" \
 "$value_channel_uploads" \
 "$value_channel_videocount" \
 "$value_channel_viewcount"
-
-
+    
+    #valores retornáveis
+    return_handle_data_channel=("null" \
+        "null" \
+        "null" \
+        "null" \
+        "$value_channel_uploads" \
+        "$value_channel_videocount" \
+        "null")
 }
 
 
 function handle_data_video() {
+
+    # $1 - id do canal
+
+    get_data_video "${1}"
+
+    local json_video=$(cat $file_json_video | jq .items[0].id)
+    local value_video_id=$( [[ $json_video != "null" ]] && echo "${json_video:1:-1}")
+
+    local json_video=$(cat $file_json_video | jq .items[0].snippet.publishedAt)
+    local value_video_date=$( [[ $json_video != "null" ]] && echo "${json_video:1:-1}")
+
+    local json_video=$(cat $file_json_video | jq .items[0].snippet.title)
+    local value_video_title=$( [[ $json_video != "null" ]] && echo "${json_video:1:-1}")
+
+    local json_video=$(cat $file_json_video | jq .items[0].snippet.description)
+    local value_video_description=$( [[ $json_video != "null" ]] && echo "${json_video:1:-1}")
+
+    local json_video=$(cat $file_json_video | jq .items[0].snippet.thumbnails.high.url)
+    local value_video_img=$( [[ $json_video != "null" ]] && echo "${json_video:1:-1}")
+
+    local json_video=$(cat $file_json_video | jq .items[0].snippet.channelTitle)
+    local value_video_channeltitle=$( [[ $json_video != "null" ]] && echo "${json_video:1:-1}")
+
+    local json_video=$(cat $file_json_video | jq .items[0].contentDetails.duration)
+    local value_video_duration=$( [[ $json_video != "null" ]] && echo "${json_video:3:-1}")
+
+    local json_video=$(cat $file_json_video | jq .items[0].contentDetails.definition)
+    local value_video_definition=$( [[ $json_video != "null" ]] && echo "${json_video:1:-1}")
+
+    local json_video=$(cat $file_json_video | jq .items[0].contentDetails.caption)
+    local value_video_caption=$( [[ $json_video != "null" ]] && echo "${json_video:1:-1}")
+
+    add_data_video "$value_video_id" \
+"$value_video_date" \
+"$value_video_title" \
+"$value_video_description" \
+"$value_video_img" \
+"$value_video_channeltitle" \
+"$value_video_duration" \
+"$value_video_definition" \
+"$value_video_caption"
+
+}
+
+
+function handle_data_playlist() {
+    # $1 - id playlist do canal
 
     if [[ $VIDEO != true ]] && [[ $AUDIO != true ]];then
         return
     fi
 
     while true; do
-        get_data_video
+
+        get_data_playlist "$1" "$next_page_token"
 
         for id_video in `seq 0 $(($count_video -1))`
         do
-            json_video=$(cat $file_json_video | jq .items[$id_video].snippet.publishedAt)
-            value_video_date=$( [[ $json_video != "null" ]] && echo "${json_video:1:-1}" || echo "")
 
-            json_video=$(cat $file_json_video | jq .items[$id_video].snippet.title)
-            value_video_title=$( [[ $json_video != "null" ]] && echo "${json_video:1:-1}" || echo "")
+            local file_json_playlist=$return_get_data_playlist
+            local json_playlist=$(cat $file_json_playlist | jq .items[$id_video].snippet.resourceId.videoId)
+            local value_playlist_videoId=$( [[ $json_playlist != "null" ]] && echo "${json_playlist:1:-1}" || echo "")
 
-            json_video=$(cat $file_json_video | jq .items[$id_video].snippet.description)
-            value_video_description=$( [[ $json_video != "null" ]] && echo "${json_video:1:-1}" || echo "")
+            handle_data_video "$value_playlist_videoId"
 
-            json_video=$(cat $file_json_video | jq .items[$id_video].snippet.thumbnails.high.url)
-            value_video_high_url=$( [[ $json_video != "null" ]] && echo "${json_video:1:-1}" || echo "")
-
-            json_video=$(cat $file_json_video | jq .items[$id_video].snippet.resourceId.videoId)
-            value_video_id=$( [[ $json_video != "null" ]] && echo "${json_video:1:-1}" || echo "")
-
-            json_video=$(cat $file_json_video | jq .items[$id_video].snippet.channelId)
-            value_video_channel_id=$( [[ $json_video != "null" ]] && echo "${json_video:1:-1}" || echo "")
-
-            add_data_video  "$value_video_title" "$value_video_date" "$value_video_description" "$value_video_high_url" "$value_video_id" "$value_video_channel_id"
+        #    add_data_playlist  "$value_playlist_title" "$value_playlist_date" "$value_playlist_description" "$value_playlist_high_url" "$value_playlist_videoId" "$value_playlist_channel_id"
         done
 
-        if [[ $( cat $file_json_video| jq .nextPageToken) != "null" ]]; then
-            next_page_token=$( cat $file_json_video| jq .nextPageToken)
-            next_page_token=${next_page_token:1:-1}
+        if [[ $( cat $file_json_playlist| jq .nextPageToken) != "null" ]]; then
+            local next_page_token=$( cat $file_json_playlist| jq .nextPageToken)
+            local next_page_token=${next_page_token:1:-1}
 
         else
             break
@@ -564,10 +678,18 @@ elif [[ -s "$1" ]] || [[ -s "out-config" ]] || [[ -d "${1}out-config" ]]; then
 
     fi
 
+    #return array:return_handle_data_channel
+    # 0 - null
+    # 1 - null
+    # 2 - null
+    # 3 - null
+    # 4 - value_channel_uploads
+    # 5 - value_channel_videocount
+    # 6 - null
     handle_data_channel
 
-    if [[ $value_channel_videocount -ne 0 ]]; then
-        handle_data_video
+    if [[ ${return_handle_data_channel[5]} -ne 0 ]]; then
+        handle_data_playlist ${return_handle_data_channel[4]}
     else
         echo -e "${YELLOW}Sem vídeos no canal${RESET}"
     fi
