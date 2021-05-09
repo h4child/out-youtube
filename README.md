@@ -15,14 +15,13 @@
 
 ## Fazer Dowload de conteúdo do canal do youtube.
 
-Dependências:
-`ffmpeg` - https://www.ffmpeg.org/download.html
-`youtube-dl` - https://ytdl-org.github.io/youtube-dl/download.html
-`jq` - https://stedolan.github.io/jq/download/
-`wget` - https://www.gnu.org/software/wget/
+Dependências: <br />
+`ffmpeg` - https://www.ffmpeg.org/download.html <br />
+`youtube-dl` - https://ytdl-org.github.io/youtube-dl/download.html <br />
+`jq` - https://stedolan.github.io/jq/download/ <br />
+`wget` - https://www.gnu.org/software/wget/ <br />
 
-`./out-youtube out <diretório>`
-Vai ser criado um arquivo chamado out-config que deverá ser preenchido de acordo
+`./out-youtube out <diretório>`: Vai ser criado um arquivo chamado out-config que deverá ser preenchido de acordo
 com as informações necessária. A leitura do out-config ficará mais claro como usar.
 
 Depois que as informações forem colocadas no out-config o out-youtube poderá baixar
