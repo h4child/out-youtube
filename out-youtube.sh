@@ -423,66 +423,53 @@ $( [[ "${1}" =~ "/" ]] && echo "${1}" || echo "https://www.youtube.com/watch?v=$
         fi
     fi
 
+    echo -e "${B_RESET}TXT: ${B_YELLOW}${filename}.txt${RESET}"
     #testa se já existe um arquivo dados-video
     if [[ ! -s "$filename_txt" ]];then
         >"$filename_txt"
 
-        echo -e "${B_RESET}TXT: ${B_YELLOW}${filename}.txt${RESET}"
-
         #varios echos que apenas inseri informações do vídeo, áudio ou ambos
         echo "TÍTULO: ${3}" >> "${filename_txt}"
-        echo -e "TÍTULO: ${CYAN}${3}${RESET}"
         echo  >> "${filename_txt}"
 
         echo "DATA: ${2}" >> "${filename_txt}"
-        echo -e "DATA: ${CYAN}${2}${RESET}"
         echo  >> "${filename_txt}"
 
         echo "DESCRIÇÃO: ${4}" >> "${filename_txt}"
-        echo -e "DESCRIÇÃO: ${CYAN}$([[ ${#4} -gt 80 ]] && echo "${4:0:80} . . ." || echo "${4}")${RESET}"
         echo  >> "${filename_txt}"
 
         echo "CAMINHO VÍDEO: $filename_video" >> "${filename_txt}"
-        echo -e "CAMINHO VÍDEO: ${CYAN}$filename_video${RESET}"
         echo  >> "${filename_txt}"
 
         echo "CAMINHO AUDIO: $filename_audio" >> "${filename_txt}"
-        echo -e "CAMINHO AUDIO: ${CYAN}$filename_audio${RESET}"
         echo  >> "${filename_txt}"
 
         echo "CAPA DO VÍDEO: ${capa_video}" >> "${filename_txt}"
-        echo -e "CAPA DO VÍDEO: ${CYAN}${capa_video}${RESET}"
         echo  >> "${filename_txt}"
 
         echo "ID CANAL: $( [[ -z ${CHANNEL_YOUTUBE} ]] && echo "${USER_YOUTUBE}" || echo "${CHANNEL_YOUTUBE}")" >> "${filename_txt}"
-        echo -e "ID CANAL: ${CYAN}$( [[ -z ${CHANNEL_YOUTUBE} ]] && echo "${USER_YOUTUBE}" || echo "${CHANNEL_YOUTUBE}")${RESET}"
         echo  >> "${filename_txt}"
 
         echo "lINK DA CAPA: ${5}" >> "${filename_txt}"
-        echo -e "lINK DA CAPA: ${CYAN}${5}${RESET}"
         echo  >> "${filename_txt}"
 
         echo "LINK: www.youtube.com/watch?v=${1}" >> "${filename_txt}"
-        echo -e "LINK: ${CYAN}www.youtube.com/watch?v=${1}${RESET}"
         echo  >> "${filename_txt}"
 
         echo "DURAÇÃO: ${7}" >> "${filename_txt}"
-        echo -e "DURAÇÃO: ${CYAN}${7}${RESET}"
         echo  >> "${filename_txt}"
 
         echo "QUALIDADE: ${8}" >> "${filename_txt}"
-        echo -e "QUALIDADE: ${CYAN}${8}${RESET}"
         echo  >> "${filename_txt}"
 
         echo "LEGENDA (NÃO AUTOMÁTICA): ${9}" >> "${filename_txt}"
-        echo -e "LEGENDA (NÃO AUTOMÁTICA): ${CYAN}${9}${RESET}"
 
         echo  >> "${filename_txt}"
-        echo 
 
-        echo "inserido"
+        echo "inserido: TÍTULO, DATA, DESCRIÇÃO, CAMINHO VÍDEO, CAMINHO AUDIO, CAPA DO VÍDEO, ID CANAL, lINK DA CAPA, LINK, DURAÇÃO, QUALIDADE, LEGENDA"
+    else
+        echo -e "Já existe um \"${filename}.txt\" no \"$DIRECTORY\""$RESET
     fi
-
 
     echo -e $B_YELLOW"---------------------${RESET}"
     echo
@@ -641,7 +628,10 @@ if [[ "$1" == "out" ]] && [[ -n "$2" ]]; then
 
     if [[ -s "${2}out-config" ]]; then
         read -p "subtituir o out config (sim):" replace
-        [[ $replace != "sim" ]] && echo "Não substituiu! `exit 0`";
+        if [[ $replace != "sim" ]];then
+            echo "Não substituiu!";
+            exit 1
+        fi
     fi
 
     $( > $path_config)
