@@ -328,11 +328,20 @@ function add_data_video() {
     # $8 - value_video_definition
     # $9 - value_video_caption
 
+    # loop 
+    # em vezes que retorna "ERROR: No video formats found" falso positivo
+    while true; do
 # youtube-dl retorna o o diretório do out-config nome do arquivo e a extensão
-    local path=$(youtube-dl -o "$DIRECTORY%(title)s-%(id)s.%(ext)s" \
+        local path=$(youtube-dl -o "$DIRECTORY%(title)s-%(id)s.%(ext)s" \
 -f [ext=mp4] \
 --get-filename \
 $( [[ "${1}" =~ "/" ]] && echo "${1}" || echo "https://www.youtube.com/watch?v=${1}"))
+
+        if [[ ${#path} -gt 3 ]];then
+            break
+        fi
+    done
+
 
     #retona apenas nome e a extensão
     filename_ext=$(basename "$path")
