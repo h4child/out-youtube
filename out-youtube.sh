@@ -408,7 +408,7 @@ $( [[ "${1}" =~ "/" ]] && echo "${1}" || echo "https://www.youtube.com/watch?v=$
 
                     mv "${DIRECTORY}${filename}.mp3" "${DIRECTORY}$$${filename}.mp3"
                     capa_video="${DIRECTORY}${filename}.jpg"
-                    wget -q -O "$capa_video" ${5}
+                    wget -q -O "$capa_video" "${5}"
 
                     ffmpeg -i "$DIRECTORY$$$filename.mp3" -i "$capa_video" \
 -loglevel 24 \
@@ -447,13 +447,13 @@ $( [[ "${1}" =~ "/" ]] && echo "${1}" || echo "https://www.youtube.com/watch?v=$
         echo "DESCRIÇÃO: ${4}" >> "${filename_txt}"
         echo  >> "${filename_txt}"
 
-        echo "CAMINHO VÍDEO: $filename_video" >> "${filename_txt}"
+        echo "CAMINHO VÍDEO: $([[ -e "${path}" ]] && echo "${path}")" >> "${filename_txt}"
         echo  >> "${filename_txt}"
 
-        echo "CAMINHO AUDIO: $filename_audio" >> "${filename_txt}"
+        echo "CAMINHO AUDIO: $([[ -e "${DIRECTORY}${filename}.mp3" ]] && echo "${DIRECTORY}${filename}.mp3")" >> "${filename_txt}"
         echo  >> "${filename_txt}"
 
-        echo "CAPA DO VÍDEO: ${capa_video}" >> "${filename_txt}"
+        echo "CAPA DO VÍDEO: $([[ -e "${DIRECTORY}${filename}.jpg" ]] && echo "${DIRECTORY}${filename}.jpg")" >> "${filename_txt}"
         echo  >> "${filename_txt}"
 
         echo "ID CANAL: $( [[ -z ${CHANNEL_YOUTUBE} ]] && echo "${USER_YOUTUBE}" || echo "${CHANNEL_YOUTUBE}")" >> "${filename_txt}"
