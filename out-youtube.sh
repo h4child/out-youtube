@@ -27,7 +27,7 @@
 # dependencias:
 # Chave API do Youyube (se for necessário depois crio um tutoria mais moderno) - https://blog.difluir.com/2016/10/como-criar-uma-chave-de-api-para-youtube/ 
 # wget -q - https://www.gnu.org/software/wget/
-# youtube-dl - http://ytdl-org.github.io/youtube-dl/download.html
+# yt-dlp - http://ytdl-org.github.io/yt-dlp/download.html
 # ffmpeg - https://ffmpeg.org/download.html
 # 
 # 
@@ -81,18 +81,17 @@ echo -e "# Esse arquivo será usado para guardar as informações para fazer dow
 \n# A chave API do youtube que será usada para ter aceso a informações do canal.\
 \n# criar uma API_KEY\
 \n#\nAPI_KEY=\n\n\
-\n# O ID do canal desejado é similar a esse UCgnYFet4mgK-7SpNJoI6b_A\
-\n# A informação do Channel geralmente está na url do \
-\n# canal https://www.youtube.com/channel/UCgnYFet4mgK-7SpNJoI6b_A\
-\n# Talvez precise atualizar a paǵina do canal para mostrar o ID do canal\
-\n# Você deve colocar o valor no CHANNEL_YOUTUBE ou colocar o USER_YOUTUBE. Caso os dois\
-\n# estejam definidos o out-youtube terá preferência no CHANNEL_YOUTUBE\
-\n#\nCHANNEL_YOUTUBE=\n\
-\n# Para encontrar o id e colocar no CHANNEL_YOUTUBE ou user no USER_YOUTUBE pode ser\
-\n# um pouco chato para achar o que pode ajudar com esse link \
-\n# https://support.google.com/youtube/answer/6180214?hl=en\
-\n# Colocar o USER_YOUTUBE do canal exemplo: dreamtheater (https://www.youtube.com/user/dreamtheater)\
-\n# \nUSER_YOUTUBE=\n\
+\n# O vídeo do canal aonde quer baixar todo o conteúdo do canal responsável \
+\n# Exemplo: \
+\n#     ID_VIDEO=\"https://www.youtube.com/watch?v=g_QtO0Rhp0w\" \
+\n# Isso vai baixar todo o conteúdo do canal da banda Rush \
+\n#     ID_VIDEO=\"g_QtO0Rhp0w\" \
+\n# A mesma coisa porém apenas o ID do vídeo. \
+\n# Lembre-se: Será feito download do canal aonde o vídeo está \
+\n# O ID_VIDEO= também consegue identificar se está em um playlist \
+\n#     ID_VIDEO=\"https://www.youtube.com/watch?v=g_QtO0Rhp0w&list=UUsnKQkbqCHPMN1DglQY38RA&index=16\" \
+\n# Dessa maneira continuará qual canal o vídeo está  \
+\nID_VIDEO=\n\n\
 \n# Esse valor é o local aonde os conteúdos do canal serão armazenados. Esse valor precisa\
 \n# estar com '/' no final senão o out-youtube interpretará como um prefixo para os arquivos.\
 \n# Esse local deverá estar criado antes de chamar o out-youtube pois ele não criará pastas\
@@ -144,9 +143,6 @@ part=contentDetails,snippet,statistics&"
 
     if [[ -n ${CHANNEL_YOUTUBE} ]];then
         local base_url_channel="${base_url_channel}id=${CHANNEL_YOUTUBE}&key="
-
-    elif [[ -n ${USER_YOUTUBE} ]];then
-        local base_url_channel=${base_url_channel}forUsername="${USER_YOUTUBE}&key="
 
     else
         echo -e "${B_RED}está faltando o ID ou o user do canal${RESET}"
@@ -331,9 +327,8 @@ function add_data_video() {
     # loop 
     # em vezes que retorna "ERROR: No video formats found" falso positivo
     while true; do
-# youtube-dl retorna o o diretório do out-config nome do arquivo e a extensão
-        local path=$(youtube-dl -o "$DIRECTORY%(title)s-%(id)s.%(ext)s" \
--f [ext=mp4] \
+# yt-dlp retorna o o diretório do out-config nome do arquivo e a extensão
+        local path=$(yt-dlp -o "$DIRECTORY%(title)s-%(id)s.%(ext)s" \
 --get-filename \
 $( [[ "${1}" =~ "/" ]] && echo "${1}" || echo "https://www.youtube.com/watch?v=${1}"))
 
@@ -358,15 +353,15 @@ $( [[ "${1}" =~ "/" ]] && echo "${1}" || echo "https://www.youtube.com/watch?v=$
 
         if [[ ! -s  "$path" ]];then #verifica se o vídeo já foi baixado naquel diretório
             while true; do
-                youtube-dl  -o "$DIRECTORY%(title)s-%(id)s.%(ext)s" \
--f [ext=mp4] \
+                yt-dlp  -o "$DIRECTORY%(title)s-%(id)s.%(ext)s" \
+-f b \
 $([[ $SUBTITLE =~ ^(TRUE|true)$ ]] && echo "--write-sub ") \
 $([[ $AUTO_SUBTITLE =~ ^(TRUE|true)$ ]] && echo "--write-auto-sub ") \
 $([[ -n $LANGUAGE ]] && echo "--sub-lang $LANGUAGE") \
 $( [[ "${1}" =~ "/" ]] && echo "${1}" || echo "https://www.youtube.com/watch?v=${1}")
                 return_youtube=$?
 
-                # return youtube-dl = $?
+                # return yt-dlp = $?
                 if [[ return_youtube -ne 0 ]]; then
                     rm $path 2> /dev/null
                     echo -e "${RED}Erro de baixar o vídeo https://www.youtube.com/watch?v=${value_playlist_videoId} . . .${RESET}"
@@ -392,7 +387,7 @@ $( [[ "${1}" =~ "/" ]] && echo "${1}" || echo "https://www.youtube.com/watch?v=$
         if [[ ! -s "$DIRECTORY$filename.mp3" ]];then
 
             while true; do
-                youtube-dl  -o "$DIRECTORY%(title)s-%(id)s.%(ext)s" \
+                yt-dlp  -o "$DIRECTORY%(title)s-%(id)s.%(ext)s" \
 -x --audio-format mp3 \
 $( [[ "${1}" =~ "/" ]] && echo "${1}" || echo "https://www.youtube.com/watch?v=${1}")
                 return_youtube=$?
@@ -482,6 +477,73 @@ $( [[ "${1}" =~ "/" ]] && echo "${1}" || echo "https://www.youtube.com/watch?v=$
 
     echo -e $B_YELLOW"---------------------${RESET}"
     echo
+
+
+}
+
+
+function get_id_channel(){
+
+    local base_url_channel="https://www.googleapis.com/youtube/v3/videos?part=snippet&id=$(get_id_video_config)&key=$API_KEY"
+
+    #$$=valor do pid
+    wget -q -O "${1}" "$base_url_channel" 2>> $([[ -n "${2}" ]] && echo "${2}" || echo "/dev/null")
+    local return_wget=$?
+
+    # retorno 4 do wget -q é Network failure.
+    if [[ $return_wget -eq 4 ]];then
+        echo -e $B_RED"sem acesso a internet${RESET}"
+        echo -e $B_RED$(tail -1 "${2}")$RESET
+        exit 1
+
+    # Conexão foi feita, porém o servidor respondeu um erro. Server issued an error response.
+    elif [[ $return_wget -eq 8 ]];then
+        if [[ $(sed -n '5p' "${2}") =~ 'ERRO 400: Bad Request' ]]; then
+            echo -e $B_RED"API_KEY inválida: $API_KEY"
+            exit 1
+
+        elif [[ $(sed -n '4p' "${2}") =~ '403 Forbidden'  ]]; then
+            echo -e $B_RED"Está faltando API_KEY" $RESET
+            echo 
+            exit 1
+
+        elif [[ $(sed -n '4p' "${2}") =~ '400 Forbidden' ]]; then
+            echo -e $B_RED"API_KEY inválida" $RESET
+            echo 
+            exit 1
+
+        else
+            echo "${RED}Servidor respondeu um erro não reconhecido${RESET}"
+            exit 1
+        fi
+
+    elif [[ $return_wget -ne 0 ]];then
+        echo ${B_RED}"Erro a usar wget${RESET}"
+        echo ${B_RED}"link: $base_url_channel${RESET}"
+        exit 1
+
+    # Conexão foi feita e retornou valor normal. Mas o resultado é zero que indica que não existe esse canal
+    elif [[ $(cat ${1} | jq .items[0].snippet.channelId) -eq 0 ]];then
+        echo -e $B_RED"Não foi possível conseguir o ID do canal através do vídeo" $RESET
+        echo 
+        exit 1
+    fi
+
+    local id_channel="$(cat ${1} | jq .items[0].snippet.channelId)"
+    echo "${id_channel:1:-1}"
+}
+
+function get_id_video_config(){
+
+    local var="$(echo $ID_VIDEO | grep -Eo "\?v=[[:alnum:]_]*" | cut -d= -f2)"
+    
+    [ -n $var ] && echo "$var" || echo "$ID_VIDEO"
+
+}
+
+function get_channel_video(){
+
+    CHANNEL_YOUTUBE="$(get_id_channel "/tmp/id_channel_$$")" 
 
 
 }
@@ -579,6 +641,14 @@ function handle_data_video() {
     local json_video=$(cat $file_json_video | jq .items[0].contentDetails.caption)
     local value_video_caption=$( [[ $json_video != "null" ]] && echo "${json_video:1:-1}")
 
+    # Esse vídeo é um live que vai acontecer ou está acontecendo
+    local json_video=$(cat $file_json_video | jq .items[0].snippet.liveBroadcastContent)
+    if [ ${json_video:1:-1}  == "upcoming" ] || [ ${json_video:1:-1}  == "live" ]
+    then
+        return
+    fi
+
+
     add_data_video "$value_video_id" \
 "$value_video_date" \
 "$value_video_title" \
@@ -628,14 +698,33 @@ function handle_data_playlist() {
 }
 
 
+function verify_values_config(){
+
+[ -z "$API_KEY" ] && echo "API_KEY não está definido em out-config" && exit 1 
+[ -z "$ID_VIDEO" ] && echo "ID_VIDEO vazio" && exit 1 
+[ -z "$DIRECTORY" ] && echo "DIRECTORY vazio" && exit 1 
+[ -z "$VIDEO" ] && echo "VIDEO vazio (true ou false)" && exit 1 
+[ -z "$AUDIO" ] && echo "AUDIO vazio (true ou false)" && exit 1 
+[ -z "$SUBTITLE" ] && echo "SUBTITLE vazio (true ou false)" && exit 1 
+[ -z "$AUTO_SUBTITLE" ] && echo "AUTO_SUBTITLE vazio (true ou false)" && exit 1 
+
+}
+
+
+# A função get_channel_video irá fornecer esse id do canal através do
+# ID_VIDEO
+CHANNEL_YOUTUBE=
+
 # primeiro if serve para opção de criar o out-config
 if [[ "$1" == "out" ]] && [[ -n "$2" ]]; then
 
     [[ ${2} = "." ]] && set -- "out" "./"; [[ ${2} = ".." ]] && set -- "out" "../";
 
-    path_config="${2}out-config"
+    [ ! -d ${2} ] && mkdir -p ${2}
 
-    if [[ -s "${2}out-config" ]]; then
+    [ ${2: -1} != '/' ] &&  path_config="${2}/out-config" || path_config="${2}out-config"
+
+    if [[ -s "$path_config" ]]; then
         read -p "subtituir o out config (sim):" replace
         if [[ $replace != "sim" ]];then
             echo "Não substituiu!";
@@ -643,7 +732,7 @@ if [[ "$1" == "out" ]] && [[ -n "$2" ]]; then
         fi
     fi
 
-    $( > $path_config)
+    > $path_config
     if [[ $? -ne 0 ]];then
         echo "não foi possível criar arquivo ${path_config}"
         exit 1
@@ -659,7 +748,7 @@ if [[ "$1" == "out" ]] && [[ -n "$2" ]]; then
 elif [[ -s "$1" ]] || [[ -s "out-config" ]] || [[ -d "${1}out-config" ]]; then
 
     #se $1 é vazio então $1=out-config
-    if [[ ! -n  "$1" ]];then
+    if [[ -z  "$1" ]];then
         set - "out-config"
         . $1
 
@@ -676,6 +765,12 @@ elif [[ -s "$1" ]] || [[ -s "out-config" ]] || [[ -d "${1}out-config" ]]; then
         exit 1
 
     fi
+
+    # verifica os valores do out-config
+    verify_values_config
+
+    # Obtém o id do canal pelo link da variavke ID_VIDEO
+    get_channel_video
 
     #return array:return_handle_data_channel
     # 0 - null

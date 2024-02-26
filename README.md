@@ -17,16 +17,33 @@
 
 Dependências: <br />
 `ffmpeg` - https://www.ffmpeg.org/download.html <br />
-`youtube-dl` - https://ytdl-org.github.io/youtube-dl/download.html <br />
+`yt-dlp` - https://ytdl-org.github.io/youtube-dl/download.html <br />
 `jq` - https://stedolan.github.io/jq/download/ <br />
 `wget` - https://www.gnu.org/software/wget/ <br />
 
-`./out-youtube out <diretório>`: Vai ser criado um arquivo chamado out-config que deverá ser preenchido de acordo
-com as informações necessária. A leitura do out-config ficará mais claro como usar.
-
-Depois que as informações forem colocadas no out-config o out-youtube poderá baixar
-o conteúdo do canal `./out-youtube <diretório out-config>`
+Para instalar em (Debian, Ubuntu, Mint):
+- `apt-get install ffmpeg jq wget pip`
+- `pip install yt-dlp --break-system-packages`
 
 
+## Uso da ferramenta
+A ferramenta gera um arquivo de configuração para cada canal. 
 
+```
+    out-youtube.sh out <directório>
+```
+Isso irá gerar um arquivo de configuração `out-config`. Nele deve inserir as configurações para o canal do youtube. O `<diretório>` será criado se não existir. Para mais informações leia o arquivo `out-config` depois de criado.
+Opções no out-config:
+- API_KEY: Informações da chave de acesso do google para o youtube
+- ID_VIDEO: Link do vídeo do canal que deve fazer download. Através desse vídeo obterá o canal.
+- DIRECTORY: O caminho aonde deve colocar os downloads do canal.
+- VIDEO: true ou false. Deve baixar os vídeos ou não
+- AUDIO: true ou false. Deve ter o áudio do vídeo em mp3.
+- SUBTITLE: true ou false. Deve baixar legenda
+- AUTO_SUBTITLE: true ou false. Deve baixar legenda gerado automaticamente.
+- LANGUAGE: As legendas(caption) que deve baixar 
+Leia o arquivo out-config para mais informações.
 
+Depois que essas informações no `out-config` forem preenchidas, deve executar `out-youtube.sh` como o caminho para o out-config.
+
+`out-youtube.sh
