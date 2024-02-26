@@ -523,7 +523,7 @@ function get_id_channel(){
         exit 1
 
     # Conexão foi feita e retornou valor normal. Mas o resultado é zero que indica que não existe esse canal
-    elif [[ $(cat ${1} | jq .items[0].snippet.channelId) -eq 0 ]];then
+    elif [[ -z "$(cat ${1} | jq .items[0].snippet.channelId)" ]];then
         echo -e $B_RED"Não foi possível conseguir o ID do canal através do vídeo" $RESET
         echo 
         exit 1
@@ -700,13 +700,14 @@ function handle_data_playlist() {
 
 function verify_values_config(){
 
-[ -z "$API_KEY" ] && echo "API_KEY não está definido em out-config" && exit 1 
-[ -z "$ID_VIDEO" ] && echo "ID_VIDEO vazio" && exit 1 
-[ -z "$DIRECTORY" ] && echo "DIRECTORY vazio" && exit 1 
-[ -z "$VIDEO" ] && echo "VIDEO vazio (true ou false)" && exit 1 
-[ -z "$AUDIO" ] && echo "AUDIO vazio (true ou false)" && exit 1 
-[ -z "$SUBTITLE" ] && echo "SUBTITLE vazio (true ou false)" && exit 1 
-[ -z "$AUTO_SUBTITLE" ] && echo "AUTO_SUBTITLE vazio (true ou false)" && exit 1 
+[ -z "$API_KEY" ] && echo -e "${RED}API_KEY não está definido em out-config${RESET}" && exit 1 
+[ -z "$ID_VIDEO" ] && echo -e "${RED}ID_VIDEO vazio${RESET}" && exit 1 
+[ -z "$DIRECTORY" ] && echo -e "${RED}DIRECTORY vazio${RESET}" && exit 1 
+[ -n "$DIRECTORY" ] && [ ! -d "$DIRECTORY" ] && echo -e "${RED}DIRECTORY não existe que está no out-config $DIRECTORY${RESET}" && exit 1 
+[ -z "$VIDEO" ] && echo -e "${RED}VIDEO vazio (true ou false)${RESET}" && exit 1 
+[ -z "$AUDIO" ] && echo -e "${RED}AUDIO vazio (true ou false)${RESET}" && exit 1 
+[ -z "$SUBTITLE" ] && echo -e "${RED}SUBTITLE vazio (true ou false)${RESET}" && exit 1 
+[ -z "$AUTO_SUBTITLE" ] && echo -e "${RED}AUTO_SUBTITLE vazio (true ou false)${RESET}" && exit 1 
 
 }
 
