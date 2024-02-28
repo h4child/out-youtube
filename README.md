@@ -23,7 +23,7 @@ Dependências: <br />
 
 Para instalar em (Debian, Ubuntu, Mint):
 - `apt-get install ffmpeg jq wget pip`
-- `pip install yt-dlp --break-system-packages`
+- `pip install yt-dlp` ou `pip install yt-dlp --break-system-packages`
 
 
 ## Uso da ferramenta
