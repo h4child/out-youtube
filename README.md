@@ -48,7 +48,7 @@ Leia o arquivo out-config para mais informações.
 
 Depois que essas informações no `out-config` forem preenchidas, deve executar `out-youtube.sh` como o caminho para o out-config.
 
-`out-youtube.sh`: O programa vai procurar o out-config no diretório atual
+`out-youtube.sh`: O programa vai procurar o out-config no diretório atual\
 `out-youtube.sh /home/user/canal_youtube/`: Procura o out-config dentro de /home/user/canal_youtube/
 
 O `out-youtube.sh` executará de acordo com out-config colocado para um canal.
