@@ -32,6 +32,8 @@ A ferramenta gera um arquivo de configuração para cada canal.
 ```
     out-youtube.sh out <directório>
 ```
+<directório>: É para criar um novo diretório para um novo canal com out-config. 
+
 Isso irá gerar um arquivo de configuração `out-config`. Nele deve inserir as configurações para o canal do youtube. O `<diretório>` será criado se não existir. Para mais informações leia o arquivo `out-config` depois de criado.
 Opções no out-config:
 - API_KEY: Informações da chave de acesso do google para o youtube
