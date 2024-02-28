@@ -13,9 +13,24 @@
 
 ```
 
-## Fazer Dowload de conteúdo do canal do youtube.
+Esse script baixa(download) todo conteúdo de um canal no youtube.
+- Vídeo
+- legenda
+- legenda automática (youtube)
+- Gera apenas um arquivo mp3 do vídeo
+- capa dos vídeos
+- capa do canal
+- quantidades de vídeos
+- quantidades de visualizações
+- playlist com todos os vídeos
+- Data de criação do canal
+- Duração de cada vídeo
+- Muito mais
 
-Dependências: <br />
+Ele baixa apenas vídeos Live(streaming) terminadas.
+
+
+## Dependências:
 `ffmpeg` - https://www.ffmpeg.org/download.html <br />
 `yt-dlp` - https://ytdl-org.github.io/youtube-dl/download.html <br />
 `jq` - https://stedolan.github.io/jq/download/ <br />
