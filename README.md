@@ -46,4 +46,18 @@ Leia o arquivo out-config para mais informações.
 
 Depois que essas informações no `out-config` forem preenchidas, deve executar `out-youtube.sh` como o caminho para o out-config.
 
-`out-youtube.sh
+`out-youtube.sh`: O programa vai procurar o out-config no diretório atual
+`out-youtube.sh /home/user/canal_youtube/`: Procura o out-config dentro de /home/user/canal_youtube/
+
+O `out-youtube.sh` executará de acordo com out-config colocado para um canal.
+
+### E se o canal tiver novos vídeos?
+Só executar o out-youtube.sh com out-config do canal que ele vai atualizar e, se precisar, baixar novos vídeos.
+
+### Como crio um chave no youtube do google
+[Link gerar](https://console.cloud.google.com/apis/credentials) para criar chave do google para colocar no out-config. Vá em bibliotecas e ativa para API-KEY para `Youtube Data API v3`. 
+
+![Criar credenciais youtube](img/credenciais.png)
+![Ativar a credencial para youtube](img/youtube.png)
+
+
