@@ -38,7 +38,7 @@ Ele baixa apenas vídeos Live(streaming) terminadas.
 
 Para instalar em (Debian, Ubuntu, Mint):
 - `apt-get install ffmpeg jq wget pip`
-- `pip install yt-dlp` ou `pip install yt-dlp --break-system-packages`
+- `python3 -m pip install -U yt-dlp`
 
 
 ## Uso da ferramenta
